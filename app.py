@@ -5,12 +5,13 @@ import base64
 import pandas as pd
 import streamlit as st
 import time
+from datetime import datetime
 
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
-authorization_code = "b3e9a2084da8b0ca7f1d2db0c6589aabea3a271e"
+authorization_code = "77de19ef918f7e4f06a1b3290813d1d7f205e88f"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -62,6 +63,9 @@ def coletar_produtos(access_token, log_area):
     pagina = 1
     todos = []
 
+    inicio = datetime.now()
+    log_area.text(f"⏳ Iniciando busca de produtos em {inicio.strftime('%H:%M:%S')}...")
+
     while True:
         params = {
             "page": pagina,
@@ -80,14 +84,16 @@ def coletar_produtos(access_token, log_area):
         response.raise_for_status()
         dados = response.json().get("data", [])
 
-        if not dados:
+        if not dados or pagina > 53:
             break
 
         todos.extend(dados)
         pagina += 1
         time.sleep(0.2)
 
-    log_area.text(f"✅ {len(todos)} produtos recebidos com sucesso.")
+    fim = datetime.now()
+    duracao = (fim - inicio).total_seconds()
+    log_area.text(f"✅ {len(todos)} produtos recebidos em {duracao:.2f} segundos.")
     return todos
 
 # =================== MOSTRAR PAINEL ===================
