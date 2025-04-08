@@ -11,7 +11,7 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "7907bb3bbb22ccdcb4f246f9ae140b80ca85d712"
+authorization_code = "5469c039e1bf0c3ba5e485932983e0ff16e6ddb2"
 
 # Inicializa o refresh_token somente após o contexto da sessão estar ativo
 if "refresh_token" not in st.session_state:
@@ -52,7 +52,7 @@ def obter_novo_refresh_token(auth_code):
     if response.ok:
         tokens = response.json()
         novo_token = tokens["refresh_token"]
-        st.session_state.refresh_token = novo_token  # Atualiza token na sessão
+        st.session_state.refresh_token = novo_token
         st.success("✅ Novo refresh token gerado com sucesso!")
         st.code(novo_token, language='text')
         return novo_token
@@ -71,7 +71,7 @@ def coletar_produtos(access_token, log_area):
     inicio = datetime.now()
     log_area.text(f"⏳ Iniciando busca de produtos em {inicio.strftime('%H:%M:%S')}...")
 
-    while True:
+    while pagina <= 3:
         params = {
             "page": pagina,
             "limit": limit
@@ -89,7 +89,6 @@ def coletar_produtos(access_token, log_area):
         response.raise_for_status()
         json_response = response.json()
         dados = json_response.get("data", [])
-        pagination = json_response.get("page")
 
         if not dados:
             break
@@ -102,9 +101,6 @@ def coletar_produtos(access_token, log_area):
 
         todos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
-
-        if pagination and pagination.get("last") == pagination.get("current"):
-            break
 
         pagina += 1
         time.sleep(0.2)
