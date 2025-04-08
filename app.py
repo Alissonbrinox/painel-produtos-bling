@@ -10,7 +10,7 @@ import time
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
-authorization_code = "f0155ece1f51e63f2d6f64998af266a4364c3121"
+authorization_code = "0ba8f6205ad473954ec95d0e9a5d3c449b056d88"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -56,7 +56,7 @@ def obter_novo_refresh_token(auth_code):
         return None
 
 # =================== COLETAR PRODUTOS ===================
-def coletar_produtos(access_token):
+def coletar_produtos(access_token, log_area):
     url = "https://www.bling.com.br/Api/v3/produtos"
     limit = 100
     params = {
@@ -64,14 +64,18 @@ def coletar_produtos(access_token):
         "limit": limit
     }
     headers = {"Authorization": f"Bearer {access_token}"}
+
+    log_area.text("📡 Requisição enviada para API do Bling...")
     response = requests.get(url, headers=headers, params=params)
 
     if response.status_code == 429:
+        log_area.text("⚠️ Atingido limite de requisições. Aguardando...")
         time.sleep(10)
         response = requests.get(url, headers=headers, params=params)
 
     response.raise_for_status()
     dados = response.json().get("data", [])
+    log_area.text(f"✅ {len(dados)} produtos recebidos com sucesso.")
     return dados
 
 # =================== MOSTRAR PAINEL ===================
@@ -109,11 +113,13 @@ with st.expander("🔄 Atualizar Refresh Token (manual)"):
 
 # Botão para carregar produtos
 if st.button("📥 Carregar Produtos do Bling"):
+    log_area = st.empty()  # Área de log dinâmica
     try:
         with st.spinner("🔐 Atualizando token..."):
             access_token = refresh_access_token(st.session_state.refresh_token)
         with st.spinner("📥 Coletando produtos..."):
-            produtos = coletar_produtos(access_token)
+            produtos = coletar_produtos(access_token, log_area)
         mostrar_painel(produtos)
     except Exception as e:
+        log_area.text("")
         st.error(f"Erro: {e}")
