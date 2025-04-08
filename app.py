@@ -9,8 +9,8 @@ import time
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-refresh_token = "e726652d2a4fd9b8e6b78ad8e0282588ee3d04d5"
-authorization_code = "23004badf2ab7cb145090c5d0db3d236e73b356c"
+st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
+authorization_code = "f0155ece1f51e63f2d6f64998af266a4364c3121"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -47,6 +47,7 @@ def obter_novo_refresh_token(auth_code):
     if response.ok:
         tokens = response.json()
         novo_token = tokens["refresh_token"]
+        st.session_state.refresh_token = novo_token  # Atualiza token na sessão
         st.success("✅ Novo refresh token gerado com sucesso!")
         st.code(novo_token, language='text')
         return novo_token
@@ -110,7 +111,7 @@ with st.expander("🔄 Atualizar Refresh Token (manual)"):
 if st.button("📥 Carregar Produtos do Bling"):
     try:
         with st.spinner("🔐 Atualizando token..."):
-            access_token = refresh_access_token(refresh_token)
+            access_token = refresh_access_token(st.session_state.refresh_token)
         with st.spinner("📥 Coletando produtos..."):
             produtos = coletar_produtos(access_token)
         mostrar_painel(produtos)
