@@ -11,10 +11,8 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "660dd29ba0407a05ab946c291a0378fdf7e97ade"
+authorization_code = "b76755238895050aa736561f63c50d6d21801943"
 
-# Garante que o session_state está inicializado corretamente
-if "refresh_token" not in st.session_state:
     st.session_state.refresh_token = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 
 # =================== TOKEN ===================
@@ -149,6 +147,10 @@ def mostrar_painel(produtos):
 
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
+
+# Inicializa o refresh_token somente após o contexto da sessão estar ativo
+if "refresh_token" not in st.session_state:
+    st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 st.title("📦 Produtos Cadastrados no Bling")
 
 # Botão para gerar novo refresh token manualmente
