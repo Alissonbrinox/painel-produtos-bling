@@ -9,8 +9,8 @@ import time
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-refresh_token = "f720d2a6394f31de0a19b4e0e4e5c0bcd5ccb8dd"
-authorization_code = "a12664d6e796a5ce3479b92140827d858f8810dc"
+refresh_token = "a8583fa72f7dd8bb6d0b0b24bac28bad7089ff78"
+authorization_code = "3cdf1de5ae4e4c3febb71cd8bba9d778c177c315"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -70,15 +70,20 @@ def coletar_produtos(access_token):
         response = requests.get(url, headers=headers, params=params)
 
     response.raise_for_status()
-    return response.json().get("data", [])
+    dados = response.json().get("data", [])
+    st.subheader("🔎 Dados brutos retornados da API:")
+    st.write(dados)
+    return dados
 
 # =================== MOSTRAR PAINEL ===================
 def mostrar_painel(produtos):
     df = pd.json_normalize(produtos)
-    df_produtos = df.filter(regex=r"^produto\.")
-    df_produtos.columns = [col.replace("produto.", "") for col in df_produtos.columns]
-
-    st.dataframe(df_produtos, use_container_width=True)
+    if df.empty:
+        st.warning("Nenhum produto retornado.")
+    else:
+        df_produtos = df.filter(regex=r"^produto\.")
+        df_produtos.columns = [col.replace("produto.", "") for col in df_produtos.columns]
+        st.dataframe(df_produtos, use_container_width=True)
 
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
