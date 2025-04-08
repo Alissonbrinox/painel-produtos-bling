@@ -12,7 +12,7 @@ from io import StringIO
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
-authorization_code = "b7bbe598e5076198609e62444b7d03556828b47e"
+authorization_code = "9571b85124feef97940fee83b5f1f3286cc892eb"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -84,9 +84,11 @@ def coletar_produtos(access_token, log_area):
             response = requests.get(url, headers=headers, params=params)
 
         response.raise_for_status()
-        dados = response.json().get("data", [])
+        json_response = response.json()
+        dados = json_response.get("data", [])
+        pagination = json_response.get("page")
 
-        if not dados or pagina > 53:
+        if not dados:
             break
 
         novos = [p for p in dados if p['id'] not in ids_vistos]
@@ -97,6 +99,9 @@ def coletar_produtos(access_token, log_area):
 
         todos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
+
+        if pagination and pagination.get("last") == pagination.get("current"):
+            break
 
         pagina += 1
         time.sleep(0.2)
