@@ -9,8 +9,8 @@ import time
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-refresh_token = "a8583fa72f7dd8bb6d0b0b24bac28bad7089ff78"
-authorization_code = "3cdf1de5ae4e4c3febb71cd8bba9d778c177c315"
+refresh_token = "5ed2b9efb9c44088b7bd76a79e5f95942b252430"
+authorization_code = "2ef9370ec9c90b634ba517973b4062fb004cd902"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -94,11 +94,13 @@ with st.expander("🔄 Atualizar Refresh Token (manual)"):
     if st.button("Gerar novo refresh token"):
         obter_novo_refresh_token(authorization_code)
 
-try:
-    with st.spinner("🔐 Atualizando token..."):
-        access_token = refresh_access_token(refresh_token)
-    with st.spinner("📥 Carregando produtos..."):
-        produtos = coletar_produtos(access_token)
-    mostrar_painel(produtos)
-except Exception as e:
-    st.error(f"Erro: {e}")
+# Botão para carregar produtos
+if st.button("📥 Carregar Produtos do Bling"):
+    try:
+        with st.spinner("🔐 Atualizando token..."):
+            access_token = refresh_access_token(refresh_token)
+        with st.spinner("📥 Coletando produtos..."):
+            produtos = coletar_produtos(access_token)
+        mostrar_painel(produtos)
+    except Exception as e:
+        st.error(f"Erro: {e}")
