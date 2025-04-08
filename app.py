@@ -65,4 +65,4 @@ try:
         produtos = coletar_produtos(access_token)
     mostrar_painel(produtos)
 except Exception as e:
-    st.error(f"Erro: {e}")
+    st.error(f"Erro: {e}")Q
