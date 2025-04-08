@@ -9,7 +9,7 @@ import time
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-refresh_token = "3fb1cde76502690d170d309fab20f48e5c22b71e"
+refresh_token = "4878abd356326ec7b3b114c76391322dab81adb6"
 authorization_code = "789f76867d6f6e5f097ef2e3231078381138845c"
 
 # =================== TOKEN ===================
