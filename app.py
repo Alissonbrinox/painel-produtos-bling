@@ -10,7 +10,7 @@ import time
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
-authorization_code = "0ba8f6205ad473954ec95d0e9a5d3c449b056d88"
+authorization_code = "b3e9a2084da8b0ca7f1d2db0c6589aabea3a271e"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -59,24 +59,36 @@ def obter_novo_refresh_token(auth_code):
 def coletar_produtos(access_token, log_area):
     url = "https://www.bling.com.br/Api/v3/produtos"
     limit = 100
-    params = {
-        "page": 1,
-        "limit": limit
-    }
-    headers = {"Authorization": f"Bearer {access_token}"}
+    pagina = 1
+    todos = []
 
-    log_area.text("📡 Requisição enviada para API do Bling...")
-    response = requests.get(url, headers=headers, params=params)
+    while True:
+        params = {
+            "page": pagina,
+            "limit": limit
+        }
+        headers = {"Authorization": f"Bearer {access_token}"}
 
-    if response.status_code == 429:
-        log_area.text("⚠️ Atingido limite de requisições. Aguardando...")
-        time.sleep(10)
+        log_area.text(f"📡 Carregando página {pagina}...")
         response = requests.get(url, headers=headers, params=params)
 
-    response.raise_for_status()
-    dados = response.json().get("data", [])
-    log_area.text(f"✅ {len(dados)} produtos recebidos com sucesso.")
-    return dados
+        if response.status_code == 429:
+            log_area.text("⚠️ Limite de requisições atingido. Aguardando...")
+            time.sleep(10)
+            response = requests.get(url, headers=headers, params=params)
+
+        response.raise_for_status()
+        dados = response.json().get("data", [])
+
+        if not dados:
+            break
+
+        todos.extend(dados)
+        pagina += 1
+        time.sleep(0.2)
+
+    log_area.text(f"✅ {len(todos)} produtos recebidos com sucesso.")
+    return todos
 
 # =================== MOSTRAR PAINEL ===================
 def mostrar_painel(produtos):
