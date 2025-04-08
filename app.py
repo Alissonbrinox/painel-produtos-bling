@@ -10,7 +10,7 @@ import time
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 refresh_token = "e726652d2a4fd9b8e6b78ad8e0282588ee3d04d5"
-authorization_code = "6aaa19c25d82fc8a71c617163389d78b844bfc27"
+authorization_code = "23004badf2ab7cb145090c5d0db3d236e73b356c"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
