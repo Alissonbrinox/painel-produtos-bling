@@ -11,8 +11,11 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
-authorization_code = "7ab7c7cc75ea8768dfef5ddcd283518132f6578f"
+authorization_code = "660dd29ba0407a05ab946c291a0378fdf7e97ade"
+
+# Garante que o session_state está inicializado corretamente
+if "refresh_token" not in st.session_state:
+    st.session_state.refresh_token = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
