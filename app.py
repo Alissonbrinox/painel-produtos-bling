@@ -9,8 +9,8 @@ import time
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-refresh_token = "4878abd356326ec7b3b114c76391322dab81adb6"
-authorization_code = "789f76867d6f6e5f097ef2e3231078381138845c"
+refresh_token = "f720d2a6394f31de0a19b4e0e4e5c0bcd5ccb8dd"
+authorization_code = "a12664d6e796a5ce3479b92140827d858f8810dc"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
