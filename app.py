@@ -11,7 +11,7 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "25606e2467f8c286487b25f6ec2b30cfad0e51b2"
+authorization_code = "0f23cceb45b075d5eced1f553459aaa4fc425b64"
 
     st.session_state.refresh_token = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 
