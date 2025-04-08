@@ -9,8 +9,8 @@ import time
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-refresh_token = "5ed2b9efb9c44088b7bd76a79e5f95942b252430"
-authorization_code = "2ef9370ec9c90b634ba517973b4062fb004cd902"
+refresh_token = "e726652d2a4fd9b8e6b78ad8e0282588ee3d04d5"
+authorization_code = "6aaa19c25d82fc8a71c617163389d78b844bfc27"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -71,19 +71,31 @@ def coletar_produtos(access_token):
 
     response.raise_for_status()
     dados = response.json().get("data", [])
-    st.subheader("🔎 Dados brutos retornados da API:")
-    st.write(dados)
     return dados
 
 # =================== MOSTRAR PAINEL ===================
 def mostrar_painel(produtos):
-    df = pd.json_normalize(produtos)
-    if df.empty:
+    if not produtos:
         st.warning("Nenhum produto retornado.")
-    else:
-        df_produtos = df.filter(regex=r"^produto\.")
-        df_produtos.columns = [col.replace("produto.", "") for col in df_produtos.columns]
-        st.dataframe(df_produtos, use_container_width=True)
+        return
+
+    # Constrói DataFrame personalizado
+    registros = []
+    for p in produtos:
+        registros.append({
+            "ID": p.get("id"),
+            "Nome": p.get("nome"),
+            "Código": p.get("codigo"),
+            "Preço": p.get("preco"),
+            "Custo": p.get("precoCusto"),
+            "Estoque Virtual": p.get("estoque", {}).get("saldoVirtualTotal"),
+            "Tipo": p.get("tipo"),
+            "Situação": p.get("situacao"),
+            "Formato": p.get("formato"),
+        })
+
+    df = pd.DataFrame(registros)
+    st.dataframe(df, use_container_width=True)
 
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
