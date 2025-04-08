@@ -10,6 +10,7 @@ import time
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 refresh_token = "3fb1cde76502690d170d309fab20f48e5c22b71e"
+authorization_code = "8c1a9e382e008552f3a9096fc4376a4beaa21acf"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -27,6 +28,31 @@ def refresh_access_token(refresh_token):
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()
     return response.json()["access_token"]
+
+# =================== GERAR NOVO REFRESH TOKEN ===================
+def obter_novo_refresh_token(auth_code):
+    url = "https://www.bling.com.br/Api/v3/oauth/token"
+    credentials = f"{client_id}:{client_secret}"
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+    headers = {
+        "Authorization": f"Basic {encoded_credentials}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {
+        "grant_type": "authorization_code",
+        "code": auth_code,
+        "redirect_uri": "https://localhost"
+    }
+    response = requests.post(url, headers=headers, data=data)
+    if response.ok:
+        tokens = response.json()
+        novo_token = tokens["refresh_token"]
+        st.success("✅ Novo refresh token gerado com sucesso!")
+        st.code(novo_token, language='text')
+        return novo_token
+    else:
+        st.error(f"❌ Erro ao obter tokens: {response.status_code} - {response.text}")
+        return None
 
 # =================== COLETAR PRODUTOS ===================
 def coletar_produtos(access_token):
@@ -57,6 +83,11 @@ def mostrar_painel(produtos):
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
 st.title("📦 Produtos Cadastrados no Bling")
+
+# Botão para gerar novo refresh token manualmente
+with st.expander("🔄 Atualizar Refresh Token (manual)"):
+    if st.button("Gerar novo refresh token"):
+        obter_novo_refresh_token(authorization_code)
 
 try:
     with st.spinner("🔐 Atualizando token..."):
