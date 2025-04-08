@@ -6,12 +6,13 @@ import pandas as pd
 import streamlit as st
 import time
 from datetime import datetime
+from io import StringIO
 
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
 st.session_state.refresh_token = st.session_state.get("refresh_token", "3fb1cde76502690d170d309fab20f48e5c22b71e")
-authorization_code = "77de19ef918f7e4f06a1b3290813d1d7f205e88f"
+authorization_code = "f1f87e220eaa3fa80db9c9a2a35d7c0779b9af5f"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -62,6 +63,7 @@ def coletar_produtos(access_token, log_area):
     limit = 100
     pagina = 1
     todos = []
+    ids_vistos = set()
 
     inicio = datetime.now()
     log_area.text(f"⏳ Iniciando busca de produtos em {inicio.strftime('%H:%M:%S')}...")
@@ -87,13 +89,21 @@ def coletar_produtos(access_token, log_area):
         if not dados or pagina > 53:
             break
 
-        todos.extend(dados)
+        novos = [p for p in dados if p['id'] not in ids_vistos]
+        ids_duplicados = [p for p in dados if p['id'] in ids_vistos]
+
+        if ids_duplicados:
+            log_area.text(f"⚠️ Página {pagina} contém {len(ids_duplicados)} itens duplicados e foram ignorados.")
+
+        todos.extend(novos)
+        ids_vistos.update(p['id'] for p in novos)
+
         pagina += 1
         time.sleep(0.2)
 
     fim = datetime.now()
     duracao = (fim - inicio).total_seconds()
-    log_area.text(f"✅ {len(todos)} produtos recebidos em {duracao:.2f} segundos.")
+    log_area.text(f"✅ {len(todos)} produtos únicos recebidos em {duracao:.2f} segundos.")
     return todos
 
 # =================== MOSTRAR PAINEL ===================
@@ -119,6 +129,15 @@ def mostrar_painel(produtos):
 
     df = pd.DataFrame(registros)
     st.dataframe(df, use_container_width=True)
+
+    # Adiciona botão para exportar CSV
+    csv = df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📤 Baixar como CSV",
+        data=csv,
+        file_name=f"produtos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
+        mime="text/csv"
+    )
 
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
