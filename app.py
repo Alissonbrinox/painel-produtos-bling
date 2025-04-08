@@ -11,9 +11,11 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "4c27fc7ed346ed8780a2a070ac9a80349ea4e733"
+authorization_code = "7907bb3bbb22ccdcb4f246f9ae140b80ca85d712"
 
-        st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
+# Inicializa o refresh_token somente após o contexto da sessão estar ativo
+if "refresh_token" not in st.session_state:
+    st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -118,7 +120,6 @@ def mostrar_painel(produtos):
         st.warning("Nenhum produto retornado.")
         return
 
-    # Constrói DataFrame personalizado
     registros = []
     for p in produtos:
         registros.append({
@@ -136,7 +137,6 @@ def mostrar_painel(produtos):
     df = pd.DataFrame(registros)
     st.dataframe(df, use_container_width=True)
 
-    # Adiciona botão para exportar CSV
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
         label="📤 Baixar como CSV",
@@ -147,20 +147,14 @@ def mostrar_painel(produtos):
 
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
-
-# Inicializa o refresh_token somente após o contexto da sessão estar ativo
-if "refresh_token" not in st.session_state:
-    st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 st.title("📦 Produtos Cadastrados no Bling")
 
-# Botão para gerar novo refresh token manualmente
 with st.expander("🔄 Atualizar Refresh Token (manual)"):
     if st.button("Gerar novo refresh token"):
         obter_novo_refresh_token(authorization_code)
 
-# Botão para carregar produtos
 if st.button("📥 Carregar Produtos do Bling"):
-    log_area = st.empty()  # Área de log dinâmica
+    log_area = st.empty()
     try:
         with st.spinner("🔐 Atualizando token..."):
             access_token = refresh_access_token(st.session_state.refresh_token)
