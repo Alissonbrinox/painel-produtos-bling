@@ -11,7 +11,7 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "d06837d325965e456a797c054a74d6d01380b6b7"
+authorization_code = "ec0a24b077c6855236e6c577dcdb0b7f25b1bbb4"
 
 # Inicializa o refresh_token somente após o contexto da sessão estar ativo
 if "refresh_token" not in st.session_state:
