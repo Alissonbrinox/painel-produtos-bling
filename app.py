@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "a203d52ad157654d6aa5d51f40d4feb87c0b16b4"
+authorization_code = "0cff7d9f9e8095baac34a56ea87e55e1f13ec54d"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -31,7 +31,7 @@ def refresh_access_token(refresh_token):
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()
     tokens = response.json()
-    st.session_state.refresh_token = tokens.get("refresh_token", refresh_token)  # atualiza token, se retornado
+    st.session_state.refresh_token = tokens.get("refresh_token", refresh_token)
     return tokens["access_token"]
 
 # =================== GERAR NOVO REFRESH TOKEN ===================
