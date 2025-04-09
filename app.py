@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "9814cdf588fff5bd9c5063113bb3eac92f7a42b8"
+authorization_code = "ce9c4bcfc86ce44dbfcebbcd3743c50968a7069e"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -61,7 +61,7 @@ def obter_novo_refresh_token(auth_code):
         return None
 
 # =================== COLETAR PEDIDOS ===================
-def coletar_pedidos(access_token, log_area):
+def coletar_pedidos(access_token, log_area, data_inicio, data_fim):
     url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
     limit = 100
     pagina = 1
@@ -74,7 +74,9 @@ def coletar_pedidos(access_token, log_area):
     while True:
         params = {
             "page": pagina,
-            "limit": limit
+            "limit": limit,
+            "dataEmissao[de]": data_inicio,
+            "dataEmissao[ate]": data_fim
         }
         headers = {"Authorization": f"Bearer {access_token}"}
 
@@ -148,6 +150,8 @@ with st.expander("🔄 Atualizar Refresh Token (manual)"):
         obter_novo_refresh_token(authorization_code)
 
 if aba == "Pedidos":
+    data_inicio = st.date_input("Data inicial", value=datetime(2025, 4, 1))
+    data_fim = st.date_input("Data final", value=datetime(2025, 4, 30))
     st.header("📄 Pedidos de Venda")
     if st.button("📥 Carregar Pedidos do Bling"):
         log_area = st.empty()
@@ -155,7 +159,7 @@ if aba == "Pedidos":
             with st.spinner("🔐 Atualizando token..."):
                 access_token = refresh_access_token(st.session_state.refresh_token)
             with st.spinner("📥 Coletando pedidos..."):
-                pedidos = coletar_pedidos(access_token, log_area)
+                pedidos = coletar_pedidos(access_token, log_area, data_inicio.strftime('%Y-%m-%d'), data_fim.strftime('%Y-%m-%d'))
             mostrar_pedidos(pedidos)
         except Exception as e:
             log_area.text("")
