@@ -1,4 +1,4 @@
-# app.py - Painel online com Streamlit para visualizar produtos do Bling
+# app.py - Painel online com Streamlit para visualizar pedidos do Bling
 
 import requests
 import base64
@@ -6,14 +6,12 @@ import pandas as pd
 import streamlit as st
 import time
 from datetime import datetime
-from io import StringIO
 
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "2419a3e3b40a772cd6b71dc596264a82973a6f7c"
+authorization_code = "7503c5a49258e8cc2a84473959b261653813f9ac"
 
-# Inicializa o refresh_token somente após o contexto da sessão estar ativo
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
 
@@ -60,16 +58,16 @@ def obter_novo_refresh_token(auth_code):
         st.error(f"❌ Erro ao obter tokens: {response.status_code} - {response.text}")
         return None
 
-# =================== COLETAR PRODUTOS ===================
-def coletar_produtos(access_token, log_area):
-    url = "https://www.bling.com.br/Api/v3/produtos"
+# =================== COLETAR PEDIDOS ===================
+def coletar_pedidos(access_token, log_area):
+    url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
     limit = 100
     pagina = 1
     todos = []
     ids_vistos = set()
 
     inicio = datetime.now()
-    log_area.text(f"⏳ Iniciando busca de produtos em {inicio.strftime('%H:%M:%S')}...")
+    log_area.text(f"⏳ Iniciando busca de pedidos em {inicio.strftime('%H:%M:%S')}...")
 
     while True:
         params = {
@@ -78,7 +76,6 @@ def coletar_produtos(access_token, log_area):
         }
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        log_area.text(f"📡 Carregando página {pagina}...")
         response = requests.get(url, headers=headers, params=params)
 
         if response.status_code == 429:
@@ -94,45 +91,37 @@ def coletar_produtos(access_token, log_area):
             break
 
         novos = [p for p in dados if p['id'] not in ids_vistos]
-        ids_duplicados = [p for p in dados if p['id'] in ids_vistos]
-
-        if ids_duplicados:
-            log_area.text(f"⚠️ Página {pagina} contém {len(ids_duplicados)} itens duplicados e foram ignorados.")
-
         todos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
 
-                        pagination = json_response.get("page")
+        pagination = json_response.get("page")
         if not pagination or pagination.get("current") >= pagination.get("last"):
             break
 
         pagina += 1
-        time.sleep(0.2)
+        time.sleep(0.5)
 
     fim = datetime.now()
     duracao = (fim - inicio).total_seconds()
-    log_area.text(f"🔚 Total de produtos coletados: {len(todos)} em {pagina-1} páginas.")
-    log_area.text(f"✅ {len(todos)} produtos únicos recebidos em {duracao:.2f} segundos.")
+    log_area.text(f"✅ {len(todos)} pedidos recebidos em {duracao:.2f} segundos.")
     return todos
 
 # =================== MOSTRAR PAINEL ===================
-def mostrar_painel(produtos):
-    if not produtos:
-        st.warning("Nenhum produto retornado.")
+def mostrar_pedidos(pedidos):
+    if not pedidos:
+        st.warning("Nenhum pedido retornado.")
         return
 
     registros = []
-    for p in produtos:
+    for p in pedidos:
         registros.append({
             "ID": p.get("id"),
-            "Nome": p.get("nome"),
-            "Código": p.get("codigo"),
-            "Preço": p.get("preco"),
-            "Custo": p.get("precoCusto"),
-            "Estoque Virtual": p.get("estoque", {}).get("saldoVirtualTotal"),
-            "Tipo": p.get("tipo"),
+            "Número": p.get("numero"),
+            "Data": p.get("data"),
+            "Cliente": p.get("contato", {}).get("nome"),
+            "Valor Total": p.get("total"),
             "Situação": p.get("situacao"),
-            "Formato": p.get("formato"),
+            "Tipo": p.get("tipo")
         })
 
     df = pd.DataFrame(registros)
@@ -140,28 +129,36 @@ def mostrar_painel(produtos):
 
     csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label="📤 Baixar como CSV",
+        label="📤 Baixar pedidos como CSV",
         data=csv,
-        file_name=f"produtos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
+        file_name=f"pedidos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
         mime="text/csv"
     )
 
 # =================== STREAMLIT APP ===================
-st.set_page_config(page_title="Painel de Produtos Bling", layout="wide")
-st.title("📦 Produtos Cadastrados no Bling")
+st.set_page_config(page_title="Painel Bling", layout="wide")
+st.title("📊 Painel Bling - Pedidos e Produtos")
+
+aba = st.sidebar.radio("Selecione a aba:", ["Pedidos", "Produtos"])
 
 with st.expander("🔄 Atualizar Refresh Token (manual)"):
     if st.button("Gerar novo refresh token"):
         obter_novo_refresh_token(authorization_code)
 
-if st.button("📥 Carregar Produtos do Bling"):
-    log_area = st.empty()
-    try:
-        with st.spinner("🔐 Atualizando token..."):
-            access_token = refresh_access_token(st.session_state.refresh_token)
-        with st.spinner("📥 Coletando produtos..."):
-            produtos = coletar_produtos(access_token, log_area)
-        mostrar_painel(produtos)
-    except Exception as e:
-        log_area.text("")
-        st.error(f"Erro: {e}")
+if aba == "Pedidos":
+    st.header("📄 Pedidos de Venda")
+    if st.button("📥 Carregar Pedidos do Bling"):
+        log_area = st.empty()
+        try:
+            with st.spinner("🔐 Atualizando token..."):
+                access_token = refresh_access_token(st.session_state.refresh_token)
+            with st.spinner("📥 Coletando pedidos..."):
+                pedidos = coletar_pedidos(access_token, log_area)
+            mostrar_pedidos(pedidos)
+        except Exception as e:
+            log_area.text("")
+            st.error(f"Erro: {e}")
+
+elif aba == "Produtos":
+    st.header("📦 Produtos (em breve)")
+    st.info("A visualização de produtos será adicionada aqui.")
