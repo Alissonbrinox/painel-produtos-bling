@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "d0023573c7cc1420e263a2b5e83ea50e7824502b"
+authorization_code = "610bf47bdc99ccf4d110636502e87c10ad0dc6bb"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -89,6 +89,7 @@ def coletar_pedidos(access_token, log_area, data_inicio, data_fim):
 
         response.raise_for_status()
         json_response = response.json()
+        log_area.text(f"📄 Página {pagina} carregada com {len(json_response.get('data', []))} pedidos.")
         dados = json_response.get("data", [])
 
         if not dados:
@@ -98,8 +99,11 @@ def coletar_pedidos(access_token, log_area, data_inicio, data_fim):
         todos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
 
-        pagination = json_response.get("page")
-        if not pagination or pagination.get("current") >= pagination.get("last"):
+        pagination = json_response.get("page", {})
+        pagina_atual = int(pagination.get("current", 1))
+        ultima_pagina = int(pagination.get("last", 1))
+
+        if pagina_atual >= ultima_pagina:
             break
 
         pagina += 1
@@ -111,7 +115,8 @@ def coletar_pedidos(access_token, log_area, data_inicio, data_fim):
     return todos
 
 # =================== MOSTRAR PAINEL ===================
-def mostrar_pedidos(pedidos):
+def mostrar_pedidos(pedidos)
+            commit_push_automatico("Atualização de pedidos coletados"):
     if not pedidos:
         st.warning("Nenhum pedido retornado.")
         return
@@ -124,7 +129,7 @@ def mostrar_pedidos(pedidos):
             "Data": p.get("data"),
             "Cliente": p.get("contato", {}).get("nome"),
             "Valor Total": p.get("total"),
-            "Situação": p.get("situacao"),
+            "Situação": p.get("situacao", {}).get("descricao", ""),
             "Tipo": p.get("tipo")
         })
 
@@ -138,6 +143,26 @@ def mostrar_pedidos(pedidos):
         file_name=f"pedidos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
         mime="text/csv"
     )
+
+# =================== GIT PUSH AUTOMÁTICO ===================
+import subprocess
+import os
+
+def commit_push_automatico(mensagem="Atualização via painel"):
+    try:
+        subprocess.run(["git", "config", "--global", "user.name", os.environ["GITHUB_USER"]])
+        subprocess.run(["git", "config", "--global", "user.email", f"{os.environ['GITHUB_USER']}@users.noreply.github.com"])
+        subprocess.run(["git", "add", "app.py"])
+        subprocess.run(["git", "commit", "-m", mensagem])
+        subprocess.run([
+            "git", "push",
+            f"https://{os.environ['GITHUB_USER']}:{os.environ['GITHUB_TOKEN']}@github.com/{os.environ['GITHUB_USER']}/{os.environ['GITHUB_REPO']}.git",
+            "main"
+        ])
+        st.success("🚀 Código atualizado no GitHub com sucesso!")
+    except Exception as e:
+        st.warning(f"⚠️ Falha ao enviar para o GitHub: {e}")
+
 
 # =================== STREAMLIT APP ===================
 st.set_page_config(page_title="Painel Bling", layout="wide")
@@ -163,8 +188,71 @@ if aba == "Pedidos":
             mostrar_pedidos(pedidos)
         except Exception as e:
             log_area.text("")
-            st.error(f"Erro: {e}")
+            st.error(f"Erro: {e}")  # erro genérico
+        st.warning("❌ Push automático não executado devido a erro anterior.")
 
 elif aba == "Produtos":
-    st.header("📦 Produtos (em breve)")
-    st.info("A visualização de produtos será adicionada aqui.")
+    st.header("📦 Produtos Cadastrados")
+    if st.button("📥 Carregar Produtos do Bling"):
+        log_area = st.empty()
+        try:
+            with st.spinner("🔐 Atualizando token..."):
+                access_token = refresh_access_token(st.session_state.refresh_token)
+
+            url = "https://www.bling.com.br/Api/v3/produtos"
+            pagina = 1
+            limit = 100
+            todos = []
+            ids_vistos = set()
+            inicio = datetime.now()
+
+            while True:
+                params = {"page": pagina, "limit": limit}
+                headers = {"Authorization": f"Bearer {access_token}"}
+                response = requests.get(url, headers=headers, params=params)
+                response.raise_for_status()
+                json_response = response.json()
+                dados = json_response.get("data", [])
+
+                novos = [p for p in dados if p['id'] not in ids_vistos]
+                todos.extend(novos)
+                ids_vistos.update(p['id'] for p in novos)
+
+                pagination = json_response.get("page")
+                if not pagination or pagination.get("current") >= pagination.get("last"):
+                    break
+
+                pagina += 1
+                time.sleep(0.3)
+
+            fim = datetime.now()
+            duracao = (fim - inicio).total_seconds()
+            log_area.success(f"✅ {len(todos)} produtos recebidos em {duracao:.2f} segundos.")
+
+            registros = []
+            for p in todos:
+                registros.append({
+                    "ID": p.get("id"),
+                    "Nome": p.get("nome"),
+                    "Código": p.get("codigo"),
+                    "Preço": p.get("preco"),
+                    "Custo": p.get("precoCusto"),
+                    "Estoque Virtual": p.get("estoque", {}).get("saldoVirtualTotal"),
+                    "Tipo": p.get("tipo"),
+                    "Situação": p.get("situacao"),
+                    "Formato": p.get("formato")
+                })
+
+            df = pd.DataFrame(registros)
+            st.dataframe(df, use_container_width=True)
+
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="📤 Baixar produtos como CSV",
+                data=csv,
+                file_name=f"produtos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.csv",
+                mime="text/csv"
+            )
+        except Exception as e:
+            log_area.text("")
+            st.error(f"Erro: {e}")
