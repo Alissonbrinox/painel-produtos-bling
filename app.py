@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "b210867a103550080adef2cd975b04752447ff09"
+authorization_code = "52d25090c93f137b3bd2ed3b3dab0f649dc50b30"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -189,7 +189,7 @@ if aba == "Pedidos":
         except Exception as e:
             log_area.text("")
             st.error(f"Erro: {e}")  # erro genérico
-        st.warning("❌ Push automático não executado devido a erro anterior.")
+        # st.warning("❌ Push automático não executado devido a erro anterior.")  # Removido pois não houve erro
 
 elif aba == "Produtos":
     st.header("📦 Produtos Cadastrados")
