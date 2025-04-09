@@ -11,7 +11,7 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "234cab3771eb4af79fb180de4771943e8e584e77"
+authorization_code = "0215bdb565789a0210de8e51a2f67dc71041dbe0"
 
 # Inicializa o refresh_token somente após o contexto da sessão estar ativo
 if "refresh_token" not in st.session_state:
@@ -32,7 +32,7 @@ def refresh_access_token(refresh_token):
     }
     response = requests.post(url, headers=headers, data=data)
     response.raise_for_status()
-        log_area.text(f"📥 Página {pagina} retornou {len(response.json().get('data', []))} produtos.")
+        log_area.text(f"📥 Página {pagina} retornou {len(json_response.get('data', []))} produtos.").get('data', []))} produtos.")
     return response.json()["access_token"]
 
 # =================== GERAR NOVO REFRESH TOKEN ===================
