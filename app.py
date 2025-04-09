@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "52d25090c93f137b3bd2ed3b3dab0f649dc50b30"
+authorization_code = "6658e3f7c6e9b36c8f4a12008beb6786fadeda29"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -100,8 +100,8 @@ def coletar_pedidos(access_token, log_area, data_inicio, data_fim):
         ids_vistos.update(p['id'] for p in novos)
 
         pagination = json_response.get("page", {})
-        pagina_atual = int(pagination.get("current", 1))
-        ultima_pagina = int(pagination.get("last", 1))
+        pagina_atual = int(pagination.get("current", pagina))
+        ultima_pagina = int(pagination.get("last", pagina))
 
         if pagina_atual >= ultima_pagina:
             break
