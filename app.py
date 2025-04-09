@@ -11,7 +11,7 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "cf2878d02e97ddcbbdb021405ec2fd869c412e64"
+authorization_code = "d06837d325965e456a797c054a74d6d01380b6b7"
 
 # Inicializa o refresh_token somente após o contexto da sessão estar ativo
 if "refresh_token" not in st.session_state:
@@ -71,7 +71,7 @@ def coletar_produtos(access_token, log_area):
     inicio = datetime.now()
     log_area.text(f"⏳ Iniciando busca de produtos em {inicio.strftime('%H:%M:%S')}...")
 
-    while pagina <= 3:
+    while True:
         params = {
             "page": pagina,
             "limit": limit
@@ -101,6 +101,10 @@ def coletar_produtos(access_token, log_area):
 
         todos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
+
+                pagination = json_response.get("page")
+        if pagination and pagination.get("last") == pagination.get("current"):
+            break
 
         pagina += 1
         time.sleep(0.2)
