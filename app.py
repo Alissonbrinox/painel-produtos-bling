@@ -11,7 +11,7 @@ from io import StringIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "ec0a24b077c6855236e6c577dcdb0b7f25b1bbb4"
+authorization_code = "e5932880ece31fa323d5e7ac55caff86247c8047"
 
 # Inicializa o refresh_token somente após o contexto da sessão estar ativo
 if "refresh_token" not in st.session_state:
@@ -102,7 +102,7 @@ def coletar_produtos(access_token, log_area):
         todos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
 
-                pagination = json_response.get("page")
+        pagination = json_response.get("page")
         if pagination and pagination.get("last") == pagination.get("current"):
             break
 
