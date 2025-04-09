@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "ce9c4bcfc86ce44dbfcebbcd3743c50968a7069e"
+authorization_code = "3b79936582eccf41559b6d00c99d9e8090e4e3ce"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
