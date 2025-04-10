@@ -10,7 +10,7 @@ from datetime import datetime
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "0cff7d9f9e8095baac34a56ea87e55e1f13ec54d"
+authorization_code = "8bfc2a5f0ce3a9e2864680bca38d21ecb251b501"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -115,4 +115,38 @@ def coletar_pedidos(access_token, log_area, data_inicio, data_fim):
     log_area.text(f"✅ {len(todos)} pedidos recebidos em {duracao:.2f} segundos.")
     return todos
 
-# =================== RESTANTE DO CÓDIGO PERMANECE INALTERADO ===================
+# =================== INTERFACE STREAMLIT ===================
+st.set_page_config(page_title="Pedidos Bling", layout="wide")
+st.title("📄 Pedidos de Venda")
+
+with st.expander("🔄 Atualizar Refresh Token (manual)"):
+    if st.button("Gerar novo refresh token"):
+        obter_novo_refresh_token(authorization_code)
+
+data_inicio = st.text_input("Data inicial", value="2025/04/01")
+data_fim = st.text_input("Data final", value="2025/04/30")
+
+if st.button("📥 Carregar Pedidos do Bling"):
+    log_area = st.empty()
+    try:
+        with st.spinner("🔐 Atualizando token..."):
+            access_token = refresh_access_token(st.session_state.refresh_token)
+        with st.spinner("📥 Coletando pedidos..."):
+            pedidos = coletar_pedidos(access_token, log_area, data_inicio, data_fim)
+        if pedidos:
+            df = pd.DataFrame([{
+                "ID": p.get("id"),
+                "Número": p.get("numero"),
+                "Data": p.get("data"),
+                "Cliente": p.get("cliente", {}).get("nome"),
+                "Valor Total": p.get("valorTotal"),
+                "Situação": p.get("situacao"),
+                "Tipo": p.get("tipo")
+            } for p in pedidos])
+            st.dataframe(df, use_container_width=True)
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button("📥 Baixar pedidos como CSV", data=csv, file_name="pedidos.csv", mime="text/csv")
+        else:
+            st.warning("Nenhum pedido encontrado.")
+    except Exception as e:
+        st.error(f"Erro: {e}")
