@@ -9,7 +9,7 @@ from io import BytesIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "dd0d365068f413a3ddf5049df004f4bc74f9ef3c"
+authorization_code = "f965bac5c193c0e3c14a6f2b07915750e214615a"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -115,10 +115,12 @@ def mostrar_pedidos(pedidos):
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Pedidos")
     output.seek(0)
+
+    nome_arquivo = f"pedidos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
     st.download_button(
         "📥 Baixar pedidos como Excel",
         data=output,
-        file_name="pedidos_bling.xlsx",
+        file_name=nome_arquivo,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
