@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "9e0a2a3aae82b36e62bf715e264b1f65203b1235"
+authorization_code = "9a75a74164846b5d3ec50b320e29d1c2be3031fe"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
