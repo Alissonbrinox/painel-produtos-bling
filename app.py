@@ -10,10 +10,13 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "e73baf55a0243debb1708780a95f28931134eb2f"
+authorization_code = "601cf6ed58517e19e8d179b051123bb50ef8e222"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
+
+if "json_pedidos" not in st.session_state:
+    st.session_state["json_pedidos"] = None
 
 # =================== TOKEN ===================
 def refresh_access_token(refresh_token):
@@ -75,9 +78,7 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
         if not pedidos:
             break
 
-        for pedido in pedidos:
-            todos_pedidos.append(pedido)
-
+        todos_pedidos.extend(pedidos)
         log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
 
         atual = resultado.get("page", {}).get("current", pagina)
@@ -91,6 +92,7 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
     with open("debug_pedidos.json", "w", encoding="utf-8") as f:
         json.dump(todos_pedidos, f, ensure_ascii=False, indent=2)
 
+    st.session_state["json_pedidos"] = todos_pedidos
     log_area.success(f"{len(todos_pedidos)} pedidos recebidos com sucesso!")
     return todos_pedidos
 
@@ -116,7 +118,7 @@ def mostrar_pedidos(pedidos):
         })
 
     df = pd.DataFrame(registros)
-    df["ID"] = df["ID"].astype(str)  # manter como texto para evitar notação científica
+    df["ID"] = df["ID"].astype(str)
     st.dataframe(df, use_container_width=True)
 
     output = BytesIO()
@@ -132,8 +134,8 @@ def mostrar_pedidos(pedidos):
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-    with open("debug_pedidos.json", "rb") as f:
-        st.download_button("📤 Baixar JSON bruto", f, "debug_pedidos.json", mime="application/json")
+    json_str = json.dumps(pedidos, ensure_ascii=False, indent=2)
+    st.download_button("📤 Baixar JSON bruto", data=json_str, file_name="debug_pedidos.json", mime="application/json")
 
 # =================== STREAMLIT ===================
 st.set_page_config("Pedidos Bling", layout="wide")
@@ -155,3 +157,6 @@ if st.button("📥 Carregar Pedidos do Bling"):
         mostrar_pedidos(pedidos)
     except Exception as e:
         st.error(f"Erro ao coletar pedidos: {e}")
+
+if st.session_state.get("json_pedidos"):
+    mostrar_pedidos(st.session_state["json_pedidos"])
