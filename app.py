@@ -5,11 +5,12 @@ import streamlit as st
 import time
 from datetime import datetime
 from io import BytesIO
+import json
 
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "1ed849545fb9845a1e374842717511d9b9e5e9de"
+authorization_code = "28eec7a6fa461812291b7fd8b1ff28dc278636e2"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -74,7 +75,9 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
         if not pedidos:
             break
 
-        todos_pedidos.extend(pedidos)
+        for pedido in pedidos:
+            todos_pedidos.append(pedido)
+
         log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
 
         atual = resultado.get("page", {}).get("current", pagina)
@@ -84,6 +87,9 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
 
         pagina += 1
         time.sleep(0.5)
+
+    with open("debug_pedidos.json", "w", encoding="utf-8") as f:
+        json.dump(todos_pedidos, f, ensure_ascii=False, indent=2)
 
     log_area.success(f"{len(todos_pedidos)} pedidos recebidos com sucesso!")
     return todos_pedidos
@@ -99,13 +105,13 @@ def mostrar_pedidos(pedidos):
         p = item.get("pedido", {})
         cliente = p.get("cliente", {})
         registros.append({
-            "ID": item.get("id"),
-            "Número": p.get("numero"),
-            "Data": p.get("data"),
-            "Cliente": cliente.get("nome"),
-            "Valor Total": p.get("valor"),
+            "ID": item.get("id", ""),
+            "Número": p.get("numero", ""),
+            "Data": p.get("data", ""),
+            "Cliente": cliente.get("nome", ""),
+            "Valor Total": p.get("valor", ""),
             "Situação": str(p.get("situacao", {})),
-            "Tipo": p.get("tipo")
+            "Tipo": p.get("tipo", "")
         })
 
     df = pd.DataFrame(registros)
@@ -123,6 +129,9 @@ def mostrar_pedidos(pedidos):
         file_name=nome_arquivo,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
+    with open("debug_pedidos.json", "rb") as f:
+        st.download_button("📤 Baixar JSON bruto", f, "debug_pedidos.json", mime="application/json")
 
 # =================== STREAMLIT ===================
 st.set_page_config("Pedidos Bling", layout="wide")
