@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "0996bc6d5fcc7d1b1f9b5a35c7360e70f45c3ee4"
+authorization_code = "403855ef0543e878fc26e1c5f7e432ebb571dc44"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -80,6 +80,12 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
 
         todos_pedidos.extend(pedidos)
         log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
+
+        if "page" in resultado:
+            atual = resultado["page"].get("current", pagina)
+            total = resultado["page"].get("last", pagina)
+            if atual >= total:
+                break
 
         pagina += 1
         time.sleep(0.5)
