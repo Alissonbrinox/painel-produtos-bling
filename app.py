@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "f5b5bd5ce16bf4e0b295bcd8ad1f6c95e007e867"
+authorization_code = "05c97dcf9f23126b81696c0006bad633fcebc0e9"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -102,16 +102,18 @@ def mostrar_pedidos(pedidos):
 
     registros = []
     for item in pedidos:
-        p = item.get("pedido", {})
-        cliente = p.get("cliente", {})
+        pedido_data = item.get("pedido", {})
+        cliente_data = pedido_data.get("cliente", {})
+        situacao_data = pedido_data.get("situacao", {})
+
         registros.append({
             "ID": item.get("id", ""),
-            "Número": p.get("numero", ""),
-            "Data": p.get("data", ""),
-            "Cliente": cliente.get("nome", ""),
-            "Valor Total": p.get("valor", ""),
-            "Situação": p.get("situacao", {}).get("descricao", ""),
-            "Tipo": p.get("tipo", "")
+            "Número": pedido_data.get("numero", ""),
+            "Data": pedido_data.get("data", ""),
+            "Cliente": cliente_data.get("nome", ""),
+            "Valor Total": pedido_data.get("valor", ""),
+            "Situação": situacao_data.get("descricao", ""),
+            "Tipo": pedido_data.get("tipo", "")
         })
 
     df = pd.DataFrame(registros)
