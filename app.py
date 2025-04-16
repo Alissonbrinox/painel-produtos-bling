@@ -9,7 +9,7 @@ from io import BytesIO
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "2bbf6e290a5034b7c69ea0e1945e15f800839107"
+authorization_code = "dd0d365068f413a3ddf5049df004f4bc74f9ef3c"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -77,12 +77,9 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
         todos_pedidos.extend(pedidos)
         log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
 
-        if "page" in resultado:
-            atual = resultado["page"].get("current", pagina)
-            total = resultado["page"].get("last", pagina)
-            if atual >= total:
-                break
-        else:
+        atual = resultado.get("page", {}).get("current", pagina)
+        total = resultado.get("page", {}).get("last", pagina)
+        if atual >= total:
             break
 
         pagina += 1
@@ -117,7 +114,13 @@ def mostrar_pedidos(pedidos):
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         df.to_excel(writer, index=False, sheet_name="Pedidos")
-    st.download_button("📥 Baixar pedidos como Excel", output.getvalue(), "pedidos_bling.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    output.seek(0)
+    st.download_button(
+        "📥 Baixar pedidos como Excel",
+        data=output,
+        file_name="pedidos_bling.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # =================== STREAMLIT ===================
 st.set_page_config("Pedidos Bling", layout="wide")
