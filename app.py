@@ -4,11 +4,12 @@ import pandas as pd
 import streamlit as st
 import time
 from datetime import datetime
+from io import BytesIO
 
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "a54bfac2f2268da5b1badab5c64f038ab0e67f11"
+authorization_code = "12e4d002f3b9004af7dc17969ea94e2edb7a69c2"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -75,7 +76,7 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
 
         todos_pedidos.extend(pedidos)
         log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
-        
+
         if "page" in resultado:
             atual = resultado["page"].get("current", pagina)
             total = resultado["page"].get("last", pagina)
@@ -113,8 +114,10 @@ def mostrar_pedidos(pedidos):
     df = pd.DataFrame(registros)
     st.dataframe(df, use_container_width=True)
 
-    csv = df.to_csv(index=False).encode("utf-8")
-    st.download_button("📥 Baixar pedidos como CSV", csv, "pedidos_bling.csv", "text/csv")
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+        df.to_excel(writer, index=False, sheet_name="Pedidos")
+    st.download_button("📥 Baixar pedidos como Excel", output.getvalue(), "pedidos_bling.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # =================== STREAMLIT ===================
 st.set_page_config("Pedidos Bling", layout="wide")
