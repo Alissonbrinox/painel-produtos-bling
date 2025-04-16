@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "8bf68b010887fcc1042de7a92fc2ca626a075f28"
+authorization_code = "914fca2ce0a39b33cb23d8d9bf02750ddf2d19e2"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -111,7 +111,7 @@ def mostrar_pedidos(pedidos):
             "Data": item.get("data", ""),
             "Cliente": cliente_data.get("nome", ""),
             "Valor Total": item.get("total", ""),
-            "Situação": situacao_data.get("valor", ""),
+            "Situação": situacao_data.get("descricao", ""),
             "Tipo": item.get("tipo", "")
         })
 
