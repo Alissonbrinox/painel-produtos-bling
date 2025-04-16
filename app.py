@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "601cf6ed58517e19e8d179b051123bb50ef8e222"
+authorization_code = "9e0a2a3aae82b36e62bf715e264b1f65203b1235"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -89,9 +89,6 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
         pagina += 1
         time.sleep(0.5)
 
-    with open("debug_pedidos.json", "w", encoding="utf-8") as f:
-        json.dump(todos_pedidos, f, ensure_ascii=False, indent=2)
-
     st.session_state["json_pedidos"] = todos_pedidos
     log_area.success(f"{len(todos_pedidos)} pedidos recebidos com sucesso!")
     return todos_pedidos
@@ -128,14 +125,20 @@ def mostrar_pedidos(pedidos):
 
     nome_arquivo = f"pedidos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
     st.download_button(
-        "📥 Baixar pedidos como Excel",
+        "📅 Baixar pedidos como Excel",
         data=output,
         file_name=nome_arquivo,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-    json_str = json.dumps(pedidos, ensure_ascii=False, indent=2)
-    st.download_button("📤 Baixar JSON bruto", data=json_str, file_name="debug_pedidos.json", mime="application/json")
+    json_str = json.dumps(st.session_state["json_pedidos"], ensure_ascii=False, indent=2)
+    st.download_button(
+        "📄 Baixar JSON bruto",
+        data=json_str,
+        file_name="debug_pedidos.json",
+        mime="application/json",
+        key="download_json"
+    )
 
 # =================== STREAMLIT ===================
 st.set_page_config("Pedidos Bling", layout="wide")
@@ -150,7 +153,7 @@ data_fim = st.text_input("Data final", "2025/04/30")
 
 log = st.empty()
 
-if st.button("📥 Carregar Pedidos do Bling"):
+if st.button("📅 Carregar Pedidos do Bling"):
     try:
         token = refresh_access_token(st.session_state.refresh_token)
         pedidos = coletar_pedidos(token, data_inicio, data_fim, log)
