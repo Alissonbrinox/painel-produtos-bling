@@ -1,3 +1,82 @@
+import requests
+import base64
+import pandas as pd
+import streamlit as st
+import time
+from datetime import datetime
+from io import BytesIO
+import json
+
+# =================== CONFIGURAÇÕES ===================
+client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
+client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
+authorization_code = "a54bfac2f2268da5b1badab5c64f038ab0e67f11"
+
+if "refresh_token" not in st.session_state:
+    st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
+
+if "json_pedidos" not in st.session_state:
+    st.session_state["json_pedidos"] = None
+
+# =================== TOKEN ===================
+def refresh_access_token(refresh_token):
+    url = "https://www.bling.com.br/Api/v3/oauth/token"
+    credentials = f"{client_id}:{client_secret}"
+    encoded = base64.b64encode(credentials.encode()).decode()
+    headers = {"Authorization": f"Basic {encoded}", "Content-Type": "application/x-www-form-urlencoded"}
+    data = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+    response = requests.post(url, headers=headers, data=data)
+    response.raise_for_status()
+    tokens = response.json()
+    st.session_state.refresh_token = tokens.get("refresh_token", refresh_token)
+    return tokens["access_token"]
+
+# =================== GERAR NOVO REFRESH TOKEN ===================
+def obter_novo_refresh_token(code):
+    url = "https://www.bling.com.br/Api/v3/oauth/token"
+    credentials = f"{client_id}:{client_secret}"
+    encoded = base64.b64encode(credentials.encode()).decode()
+    headers = {"Authorization": f"Basic {encoded}", "Content-Type": "application/x-www-form-urlencoded"}
+    data = {"grant_type": "authorization_code", "code": code, "redirect_uri": "https://localhost"}
+    response = requests.post(url, headers=headers, data=data)
+    if response.ok:
+        tokens = response.json()
+        novo = tokens["refresh_token"]
+        st.session_state.refresh_token = novo
+        st.success("✅ Novo refresh token gerado com sucesso!")
+        st.code(novo)
+        return novo
+    else:
+        st.error(f"Erro ao obter tokens: {response.status_code} - {response.text}")
+        return None
+
+# =================== COLETAR PEDIDOS ===================
+def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
+    url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    todos_pedidos = []
+    ids_vistos = set()
+    pagina = 1
+    limite_paginas = 2
+
+    log_area.text("Iniciando coleta de pedidos...")
+
+    for i in range(limite_paginas):
+        params = {
+            "page": pagina,
+            "limit": 100,
+            "dataEmissao[de]": data_inicio,
+            "dataEmissao[ate]": data_fim
+        }
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 429:
+            time.sleep(5)
+            continue
+
+        response.raise_for_status()
+        resultado = response.json()
+        pedidos = resultado.get("data", [])
+
         novos = [p for p in pedidos if p['id'] not in ids_vistos]
         todos_pedidos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
@@ -61,7 +140,7 @@ st.set_page_config("Pedidos Bling", layout="wide")
 st.title("📄 Pedidos de Venda")
 
 with st.expander("🔐 Atualizar Refresh Token"):
-    if st.button("Gerar novo refresh token"):in
+    if st.button("Gerar novo refresh token"):
         obter_novo_refresh_token(authorization_code)
 
 data_inicio = st.text_input("Data inicial", "2025/04/01")
