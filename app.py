@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "955768e42f0ade445811cc0dc8cd0f7210c725ed"
+authorization_code = "0347b124dea316de839a545325832a14c7217a5b"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -54,12 +54,13 @@ def obter_novo_refresh_token(code):
 def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
     url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
     headers = {"Authorization": f"Bearer {access_token}"}
-    pagina = 1
     todos_pedidos = []
+    pagina = 1
+    limite_paginas = 2  # limite configurável
 
     log_area.text("Iniciando coleta de pedidos...")
 
-    while True:
+    for pagina in range(1, limite_paginas + 1):
         params = {
             "page": pagina,
             "limit": 100,
@@ -76,18 +77,11 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
         pedidos = resultado.get("data", [])
 
         if not pedidos:
+            log_area.text(f"Página {pagina} retornou vazia. Parando.")
             break
 
         todos_pedidos.extend(pedidos)
         log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
-
-        if "page" in resultado:
-            atual = resultado["page"].get("current", pagina)
-            total = resultado["page"].get("last", pagina)
-            if atual >= total:
-                break
-
-        pagina += 1
         time.sleep(0.5)
 
     st.session_state["json_pedidos"] = todos_pedidos
