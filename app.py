@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "7511558c6957497b5c41bd70aa5d7c7463d83f36"
+authorization_code = "c2c3bfd4bb6b4e6fb21db6ee386d5a51b3f723e4"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -61,7 +61,7 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
     log_area.text("Iniciando coleta de pedidos...")
 
     for i in range(limite_paginas):
-                params = {
+        params = {
             "page": pagina,
             "limit": 100,
             "dataEmissao[de]": data_inicio,
