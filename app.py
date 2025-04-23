@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "5b15ca567999ce49faa1605a3099d867153ad183"
+authorization_code = "d7ff21f046513714cc3688719f5668ded35b355c"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -51,13 +51,12 @@ def obter_novo_refresh_token(code):
         return None
 
 # =================== COLETAR PEDIDOS ===================
-def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
+def coletar_pedidos(access_token, data_inicio, data_fim, log_area, limite_paginas):
     url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
     headers = {"Authorization": f"Bearer {access_token}"}
     todos_pedidos = []
     ids_vistos = set()
     pagina = 1
-    limite_paginas = 2
 
     log_area.text("Iniciando coleta de pedidos...")
 
@@ -80,8 +79,9 @@ def coletar_pedidos(access_token, data_inicio, data_fim, log_area):
         novos = [p for p in pedidos if p['id'] not in ids_vistos]
         todos_pedidos.extend(novos)
         ids_vistos.update(p['id'] for p in novos)
+
+        log_area.text(f"Página {pagina}: {len(novos)} novos pedidos coletados.")
         pagina += 1
-        log_area.text(f"Página {pagina}: {len(pedidos)} pedidos coletados.")
         time.sleep(0.5)
 
     st.session_state["json_pedidos"] = todos_pedidos
@@ -145,13 +145,14 @@ with st.expander("🔐 Atualizar Refresh Token"):
 
 data_inicio = st.text_input("Data inicial", "2025/04/01")
 data_fim = st.text_input("Data final", "2025/04/30")
+limite_paginas = st.number_input("Limite de páginas a coletar", min_value=1, max_value=50, value=2, step=1)
 
 log = st.empty()
 
 if st.button("📅 Carregar Pedidos do Bling"):
     try:
         token = refresh_access_token(st.session_state.refresh_token)
-        pedidos = coletar_pedidos(token, data_inicio, data_fim, log)
+        pedidos = coletar_pedidos(token, data_inicio, data_fim, log, limite_paginas)
         mostrar_pedidos(pedidos)
     except Exception as e:
         st.error(f"Erro ao coletar pedidos: {e}")
