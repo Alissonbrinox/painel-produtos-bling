@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "d892355fe994424569248e768e407d54ab427665"
+authorization_code = "22b9d7791740e5eac20d316358c9f117fc73b0a5"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -159,3 +159,46 @@ if st.button("📅 Carregar Pedidos do Bling"):
 
 if st.session_state.get("json_pedidos"):
     mostrar_pedidos(st.session_state["json_pedidos"])
+    
+# =================== CONSULTAR DADOS GERAIS DA API ===================
+with st.expander("🔍 Consultar dados da API do Bling"):
+    st.subheader("Consulta de Recursos da API")
+
+    recursos = {
+        "Situações (status)": "situacoes",
+        "Formas de Pagamento": "formas-pagamento",
+        "Naturezas de Operação": "naturezas-operacao",
+        "Produtos": "produtos",
+        "Clientes (Contatos)": "contatos",
+        "Transportadoras": "transportadoras",
+        "Departamentos": "departamentos"
+    }
+
+    recurso_escolhido = st.selectbox("Escolha o recurso para consultar:", list(recursos.keys()))
+    endpoint = recursos[recurso_escolhido]
+
+    if st.button("🔍 Consultar API"):
+        try:
+            token = refresh_access_token(st.session_state.refresh_token)
+            url = f"https://www.bling.com.br/Api/v3/{endpoint}"
+            headers = {"Authorization": f"Bearer {token}"}
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            dados_api = response.json()
+            st.success(f"✅ Dados carregados do endpoint /{endpoint}")
+
+            # Mostrar JSON
+            st.json(dados_api)
+
+            # Botão para baixar JSON
+            json_str = json.dumps(dados_api, indent=2, ensure_ascii=False)
+            st.download_button(
+                label="📄 Baixar resposta como JSON",
+                data=json_str,
+                file_name=f"{endpoint}.json",
+                mime="application/json"
+            )
+
+        except Exception as e:
+            st.error(f"Erro ao consultar {endpoint}: {e}")
+
