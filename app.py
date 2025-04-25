@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "c11a0f779fd409b7a8c58a7c8cf087b2656032b2"
+authorization_code = "817da68ca217da5d5f1c92f8d2a93cf45fd75c3c"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -50,21 +50,23 @@ def obter_novo_refresh_token(code):
         st.error(f"Erro ao obter tokens: {response.status_code} - {response.text}")
         return None
 
-# =================== BUSCAR PEDIDOS POR ID ===================
-def buscar_pedidos_por_ids(access_token, ids):
-    url_base = "https://www.bling.com.br/Api/v3/pedidos/vendas/"
+# =================== BUSCAR PEDIDOS POR NÚMEROS ===================
+def buscar_pedidos_por_numeros(access_token, numeros):
+    url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
     headers = {"Authorization": f"Bearer {access_token}"}
     pedidos = []
 
-    for id_pedido in ids:
-        url = f"{url_base}{id_pedido}"
-        response = requests.get(url, headers=headers)
+    for numero in numeros:
+        params = {"numero": numero}
+        response = requests.get(url, headers=headers, params=params)
         if response.status_code == 200:
-            dados = response.json().get("data")
+            dados = response.json().get("data", [])
             if dados:
-                pedidos.append(dados)
+                pedidos.extend(dados)
+            else:
+                st.warning(f"Nenhum pedido retornado para número {numero}.")
         else:
-            st.warning(f"Pedido {id_pedido} não encontrado. Código {response.status_code}")
+            st.warning(f"Pedido número {numero} não encontrado. Código {response.status_code}")
 
     return pedidos
 
@@ -119,20 +121,20 @@ def mostrar_pedidos(pedidos):
 
 # =================== STREAMLIT INTERFACE ===================
 st.set_page_config("Pedidos Bling", layout="wide")
-st.title("📄 Pedidos de Venda por ID")
+st.title("📄 Pedidos de Venda por Número")
 
 with st.expander("🔐 Atualizar Refresh Token"):
     if st.button("Gerar novo refresh token"):
         obter_novo_refresh_token(authorization_code)
 
-# Campo para entrada dos IDs dos pedidos
-ids_texto = st.text_input("IDs dos pedidos separados por vírgula", "6426,6425,6381")
+# Campo para entrada dos números dos pedidos
+numeros_texto = st.text_input("Números dos pedidos separados por vírgula", "6426,6425,6381")
 
-if st.button("🔍 Buscar pedidos por ID"):
+if st.button("🔍 Buscar pedidos por número"):
     try:
-        ids_list = [int(x.strip()) for x in ids_texto.split(",") if x.strip().isdigit()]
+        numeros_list = [int(x.strip()) for x in numeros_texto.split(",") if x.strip().isdigit()]
         token = refresh_access_token(st.session_state.refresh_token)
-        pedidos = buscar_pedidos_por_ids(token, ids_list)
+        pedidos = buscar_pedidos_por_numeros(token, numeros_list)
         st.session_state["json_pedidos"] = pedidos
         mostrar_pedidos(pedidos)
     except Exception as e:
