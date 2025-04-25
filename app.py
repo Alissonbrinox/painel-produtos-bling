@@ -10,7 +10,7 @@ import json
 # =================== CONFIGURAÇÕES ===================
 client_id = "9838ab2d65a8f74ab1c780f76980272dd66dcfb9"
 client_secret = "a1ffcf45d3078aaffab7d0746dc3513d583a432277e41ca80eff03bf7275"
-authorization_code = "5942df6b6f434ced4b82d79d91d44846a9fb795d"
+authorization_code = "c11a0f779fd409b7a8c58a7c8cf087b2656032b2"
 
 if "refresh_token" not in st.session_state:
     st.session_state["refresh_token"] = "3fb1cde76502690d170d309fab20f48e5c22b71e"
@@ -50,45 +50,25 @@ def obter_novo_refresh_token(code):
         st.error(f"Erro ao obter tokens: {response.status_code} - {response.text}")
         return None
 
-# =================== COLETAR PEDIDOS ===================
-def coletar_pedidos(access_token, data_inicio, data_fim, log_area, limite_paginas):
-    url = "https://www.bling.com.br/Api/v3/pedidos/vendas"
+# =================== BUSCAR PEDIDOS POR ID ===================
+def buscar_pedidos_por_ids(access_token, ids):
+    url_base = "https://www.bling.com.br/Api/v3/pedidos/vendas/"
     headers = {"Authorization": f"Bearer {access_token}"}
-    todos_pedidos = []
-    ids_vistos = set()
-    pagina = 1
+    pedidos = []
 
-    log_area.text("Iniciando coleta de pedidos...")
+    for id_pedido in ids:
+        url = f"{url_base}{id_pedido}"
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            dados = response.json().get("data")
+            if dados:
+                pedidos.append(dados)
+        else:
+            st.warning(f"Pedido {id_pedido} não encontrado. Código {response.status_code}")
 
-    for i in range(limite_paginas):
-        params = {
-            "page": pagina,
-            "limit": 100,
-            "dataEmissao[de]": data_inicio,
-            "dataEmissao[ate]": data_fim
-        }
-        response = requests.get(url, headers=headers, params=params)
-        if response.status_code == 429:
-            time.sleep(5)
-            continue
+    return pedidos
 
-        response.raise_for_status()
-        resultado = response.json()
-        pedidos = resultado.get("data", [])
-
-        novos = [p for p in pedidos if p['id'] not in ids_vistos]
-        todos_pedidos.extend(novos)
-        ids_vistos.update(p['id'] for p in novos)
-
-        log_area.text(f"Página {pagina}: {len(novos)} novos pedidos coletados.")
-        pagina += 1
-        time.sleep(0.5)
-
-    st.session_state["json_pedidos"] = todos_pedidos
-    log_area.success(f"{len(todos_pedidos)} pedidos recebidos com sucesso!")
-    return todos_pedidos
-
-# =================== EXIBIR PEDIDOS ===================
+# =================== EXIBIR PEDIDOS E EXPORTAR ===================
 def mostrar_pedidos(pedidos):
     if not pedidos:
         st.warning("Nenhum pedido retornado.")
@@ -119,86 +99,45 @@ def mostrar_pedidos(pedidos):
     output.seek(0)
 
     nome_arquivo = f"pedidos_bling_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.xlsx"
+
     st.download_button(
         "📅 Baixar pedidos como Excel",
         data=output,
         file_name=nome_arquivo,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_excel"
     )
 
-    json_str = json.dumps(st.session_state["json_pedidos"], ensure_ascii=False, indent=2)
+    json_str = json.dumps(pedidos, ensure_ascii=False, indent=2)
     st.download_button(
         "📄 Baixar JSON bruto",
         data=json_str,
         file_name="debug_pedidos.json",
         mime="application/json",
-        key=f"download_json_{datetime.now().timestamp()}"
+        key="download_json"
     )
 
-# =================== STREAMLIT ===================
+# =================== STREAMLIT INTERFACE ===================
 st.set_page_config("Pedidos Bling", layout="wide")
-st.title("📄 Pedidos de Venda")
+st.title("📄 Pedidos de Venda por ID")
 
 with st.expander("🔐 Atualizar Refresh Token"):
     if st.button("Gerar novo refresh token"):
         obter_novo_refresh_token(authorization_code)
 
-data_inicio = st.text_input("Data inicial", "2025/04/01")
-data_fim = st.text_input("Data final", "2025/04/30")
-limite_paginas = st.number_input("Limite de páginas a coletar", min_value=1, max_value=50, value=2, step=1)
+# Campo para entrada dos IDs dos pedidos
+ids_texto = st.text_input("IDs dos pedidos separados por vírgula", "6426,6425,6381")
 
-log = st.empty()
-
-if st.button("📅 Carregar Pedidos do Bling"):
+if st.button("🔍 Buscar pedidos por ID"):
     try:
+        ids_list = [int(x.strip()) for x in ids_texto.split(",") if x.strip().isdigit()]
         token = refresh_access_token(st.session_state.refresh_token)
-        pedidos = coletar_pedidos(token, data_inicio, data_fim, log, limite_paginas)
+        pedidos = buscar_pedidos_por_ids(token, ids_list)
+        st.session_state["json_pedidos"] = pedidos
         mostrar_pedidos(pedidos)
     except Exception as e:
-        st.error(f"Erro ao coletar pedidos: {e}")
+        st.error(f"Erro ao buscar pedidos: {e}")
 
+# Se já houver pedidos armazenados
 if st.session_state.get("json_pedidos"):
     mostrar_pedidos(st.session_state["json_pedidos"])
-    
-# =================== CONSULTAR DADOS GERAIS DA API ===================
-with st.expander("🔍 Consultar dados da API do Bling"):
-    st.subheader("Consulta de Recursos da API")
-
-    recursos = {
-        "Situações (status)": "situacoes",
-        "Formas de Pagamento": "formas-pagamento",
-        "Naturezas de Operação": "naturezas-operacao",
-        "Produtos": "produtos",
-        "Clientes (Contatos)": "contatos",
-        "Transportadoras": "transportadoras",
-        "Departamentos": "departamentos"
-    }
-
-    recurso_escolhido = st.selectbox("Escolha o recurso para consultar:", list(recursos.keys()))
-    endpoint = recursos[recurso_escolhido]
-
-    if st.button("🔍 Consultar API"):
-        try:
-            token = refresh_access_token(st.session_state.refresh_token)
-            url = f"https://www.bling.com.br/Api/v3/{endpoint}"
-            headers = {"Authorization": f"Bearer {token}"}
-            response = requests.get(url, headers=headers)
-            response.raise_for_status()
-            dados_api = response.json()
-            st.success(f"✅ Dados carregados do endpoint /{endpoint}")
-
-            # Mostrar JSON
-            st.json(dados_api)
-
-            # Botão para baixar JSON
-            json_str = json.dumps(dados_api, indent=2, ensure_ascii=False)
-            st.download_button(
-                label="📄 Baixar resposta como JSON",
-                data=json_str,
-                file_name=f"{endpoint}.json",
-                mime="application/json"
-            )
-
-        except Exception as e:
-            st.error(f"Erro ao consultar {endpoint}: {e}")
-
